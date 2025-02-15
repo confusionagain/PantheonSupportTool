@@ -15,5 +15,10 @@ namespace PantheonSupportTool
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());
         }
+
+        internal static class AppInfo
+        {
+            public const string Version = "0.2.0";
+        }
     }
 }

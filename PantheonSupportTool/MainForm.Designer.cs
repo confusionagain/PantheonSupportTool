@@ -1,4 +1,5 @@
 ﻿using System.Windows.Forms;
+using static PantheonSupportTool.Program;
 
 namespace PantheonSupportTool
 {
@@ -181,7 +182,7 @@ namespace PantheonSupportTool
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.Name = "MainForm";
-            this.Text = "Pantheon Support Tool";
+            this.Text = "Pantheon Support Tool v" + AppInfo.Version;
             this.ResumeLayout(false);
 
         }
