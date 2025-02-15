@@ -83,7 +83,9 @@ jobs:
       - name: Create Version Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{ github.event.repository.name }}-release.zip
+          files: |
+            ${{ github.event.repository.name }}-release.zip
+            release-artifact-directory/${{ github.event.repository.name }}.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -100,7 +102,9 @@ jobs:
       - name: Create Latest Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{ github.event.repository.name }}-release.zip
+          files: |
+            ${{ github.event.repository.name }}-release.zip
+            release-artifact-directory/${{ github.event.repository.name }}.exe
           tag_name: Latest
           name: Latest Release
           body: "This is the latest release."
