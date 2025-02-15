@@ -1,0 +1,110 @@
+name: Build and Release .NET Framework 4.7.2
+
+on:
+  push:
+    branches:
+      - main
+    # Trigger on version tags like v1.0.0
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Find solution file dynamically
+      - name: Find solution file
+        id: find_solution
+        run: |
+          $solutionFile = Get-ChildItem -Recurse -Filter "*.sln" | Select-Object -First 1
+          echo "Solution file found: $($solutionFile.FullName)"
+          echo "solution_file=$($solutionFile.FullName)" >> $GITHUB_ENV
+
+      # Build and package (Debug)
+      - name: Build (Debug)
+        run: |
+          $msbuildPath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+          & $msbuildPath ${{ env.solution_file }} /p:Configuration=Debug
+
+      # Build and package (Release)
+      - name: Build (Release)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          $msbuildPath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+          & $msbuildPath ${{ env.solution_file }} /p:Configuration=Release
+
+      # Upload Debug Build
+      - name: Upload Debug Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-debug
+          path: ${{ github.workspace }}\${{ github.event.repository.name }}\bin\Debug\*
+
+      # Upload Release Build
+      - name: Upload Release Build
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-release
+          path: ${{ github.workspace }}\${{ github.event.repository.name }}\bin\Release\*
+
+  create-releases:
+    runs-on: ubuntu-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Download Release Build
+      - name: Download Release Build
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-release
+          path: release-artifact-directory
+
+      # Zip Release Build
+      - name: Create Zip Archive
+        run: |
+          cd release-artifact-directory
+          zip -r ../${{ github.event.repository.name }}-release.zip .
+        shell: bash
+
+      # Create Release for the version tag
+      - name: Create Version Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ github.event.repository.name }}-release.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Delete Existing Latest Release
+      - name: Delete Existing Latest Release
+        run: |
+          gh release delete Latest --yes || true
+          gh release delete-tag Latest --yes || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      # Create Latest Release
+      - name: Create Latest Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ github.event.repository.name }}-release.zip
+          tag_name: Latest
+          name: Latest Release
+          body: "This is the latest release."
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
