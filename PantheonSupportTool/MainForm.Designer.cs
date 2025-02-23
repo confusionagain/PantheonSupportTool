@@ -730,6 +730,8 @@ namespace PantheonSupportTool
     "solved crashes, along with a file attachment of an archive of your related logs." +
     "";
             this.linkLabelCrashLogs.UseCompatibleTextRendering = true;
+            this.linkLabelCrashLogs.Links.Clear();
+            this.linkLabelCrashLogs.Links.Add(13, 27, "mailto:support@visionaryrealms.com");
             this.linkLabelCrashLogs.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.CrashLogsLinkLabel_LinkClicked);
             // 
             // textBox
